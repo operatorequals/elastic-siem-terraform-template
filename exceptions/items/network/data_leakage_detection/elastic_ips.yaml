@@ -1,0 +1,18 @@
+# https://www.elastic.co/guide/en/security/current/exceptions-api-create-exception-item.html
+name: Traffic to Elastic IPs
+type: simple
+namespace_type: single
+description: |
+  Outbound trraffic is sent to IPs owned by Elastic
+entries:
+- field: destination.ip
+  list:
+    type: ip
+    # Defined at
+    # lists/elastic_ips.yaml
+    id: elastic_ips
+  operator: included
+  type: list
+
+tags:
+- Skroutz

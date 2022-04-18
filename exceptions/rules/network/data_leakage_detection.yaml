@@ -1,0 +1,10 @@
+# https://www.elastic.co/guide/en/security/current/exceptions-api-create-container.html
+name: Legitimate high volume outbound traffic
+description: |
+  Silences signals that trigger when high amount
+  of traffic is sent outbound
+type: detection
+namespace_type: single
+tags:
+  - Skroutz
+

@@ -17,7 +17,7 @@ To use this repository one needs to
 * `KIBANA_PASSWORD`
 * `KIBANA_URL`
 3. (Optional) Create a `state.tf` file defining a [Remote Backend](https://www.terraform.io/language/settings/backends) - If not the Github Workflows will Read/Write the `statefile` through Workflow Artifacts.
-4. Run The Github Workflow `Push Rules` using `workflow_dispatch` button, or use `terraform [plan|apply] locally.
+4. Run The Github Workflow `Push Rules` using `workflow_dispatch` button, or use `terraform [plan|apply]` locally.
 
 ## Create New...
 
@@ -31,7 +31,7 @@ custom_rules/network/port_scanning.toml
 
 The rule will be picked up by Terraform and get deployed.
 
-### Exception for the above Rule
+### Exception - for the above Rule
 
 #### Exception Container
 
@@ -54,11 +54,11 @@ exceptions/items/network/port_scanning/internal_scanner.yaml  # The filename can
 The above YAML file contains the Exception Item fields that are defined by [Elastic API](https://www.elastic.co/guide/en/security/7.17/exceptions-api-create-exception-item.html). Yet, the `list_id` and `item_id` MUST NOT be populated as they are calculated by `terraform`.
 
 
-https://www.elastic.co/guide/en/security/7.17/exceptions-api-create-exception-item.html
-
 Creating the above files will create the Exception Container and Item in Kibana API and also tie the `port_scanning` Rule with the Exception Container (This happens by `terraform` because ofmatching the directory structure).
 
-### List to be used by an Exception Item
+NOTE: Exceptions can **also** be set for Rules under `detection-rules/rules/<group>/<rule>`.
+
+### List - to be used by an Exception Item
 
 #### List Container
 
@@ -81,4 +81,10 @@ lists/items/internal_scanners/qualys.yaml  # The filename can be anything
 The above YAML file contains the Exception Item fields that are defined by [Elastic API](https://www.elastic.co/guide/en/security/current/lists-api-create-list-item.html). Yet, the `list_id` and `id` MUST NOT be populated as they are calculated by `terraform`, effectively leaving only `value` to be populated.
 
 NOTE: If a list has more than one item (highly probable), several files can be created under `lists/items/<list_name>/<list_item>.yaml`, each populating a single `value` field. There is no other way for Terraform to support lists with this provider.
+
+## Example
+
+An example Pull Request for a Rule created with an Exception for a specific List:
+
+* https://github.com/operatorequals/elastic-siem-terraform-template/pull/2
 

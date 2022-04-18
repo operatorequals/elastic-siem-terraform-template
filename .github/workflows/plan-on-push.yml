@@ -1,0 +1,95 @@
+name: Plan on Pull Request
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "detection-rules/rules/**"
+      - "custom/**"
+      - "exceptions/**"
+      - "lists/**"
+      - ".github/workflows/plan-on-push.yml"
+  workflow_dispatch:
+
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/operatorequals/terraform-provider-elastic-siem:v0.3.0
+    env:
+      KIBANA_USERNAME: "${{ secrets.KIBANA_USERNAME }}"
+      KIBANA_PASSWORD: "${{ secrets.KIBANA_PASSWORD }}"
+      KIBANA_URL: "${{ secrets.KIBANA_URL }}"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        # Needed to also pull the `elastic/detection-rules` git submodule
+        submodules: 'true'
+
+    - name: Get State file from Artifact
+      uses: dawidd6/action-download-artifact@v2.17.0
+      with:
+        # Get the state from the Workflow that does the `Apply`
+        workflow: push-rules.yml
+        name: tfstate
+        workflow_conclusion: completed
+
+    - name: Terraform Plan
+      if: always()
+      run: |
+        # Bring Terraform provider to home directory
+        mkdir -p $HOME/.terraform.d/
+        cp -r /root/.terraform.d/* $HOME/.terraform.d
+
+        # Bring Elastic SIEM provider scripts to current directory
+        cp -r /universe_scripts universe_scripts/
+
+        terraform init
+        terraform plan -no-color > tf-output
+
+        echo "================== Last 100 Lines =================="
+        tail -100 tf-output
+        echo "================== ============== =================="
+      env:
+        KIBANA_ML_ENABLED: false
+
+    - name: Prepare PR Comment Contents
+      if: always()
+      run: |
+        echo 'TF_PLAN<<EOF' >> $GITHUB_ENV
+          tail -c ${{ env.COMMENT_MAX_LEN }} tf-output \
+          | sed 's#\n#<br />#g' \
+          | grep -v 'Refreshing state...' >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+      env:
+        COMMENT_MAX_LEN: 130000
+
+    - name: Store State file from Artifact
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: tfstate
+        path: terraform.tfstate
+
+    - name: Store Terraform Output
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: output
+        path: tf-output
+
+    - name: Create comment
+      if: always()
+      uses: peter-evans/create-or-update-comment@v1
+      with:
+        issue-number: ${{ github.event.number }}
+        body: |
+          ${{ env.HIT_LIMIT_INFO }}
+          ```
+          ${{ env.TF_PLAN }}
+          ```
+        reactions: '+1'
+

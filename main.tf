@@ -15,30 +15,6 @@ locals{
 }
 
 // ================== Rules ==================
-/* 
-  Terraform Resource that creates Elastic Rules from TOMLs
-*/
-resource "universe" "rules_elastic" {
-  provider = universe.detection_rule
-  for_each = fileset(local.elastic_rule_dir, "**/**.toml")
-
-  config   =<<CONFIG
-${file("${local.elastic_rule_dir}/${each.key}")}
-
-%{ if fileexists("${local.exception_container_dir}/${split(".", each.key)[0]}.yaml") }
-
-# Add an Exception Container to each rule
-[[rule.exceptions_list]]
-id = "${replace(split(".",each.key)[0], "/", "-")}"
-list_id = "${replace(split(".",each.key)[0], "/", "-")}"
-namespace_type = "single"
-type = "detection"
-%{ endif }
-
-CONFIG
-
-  depends_on = [universe.exceptions, universe.exception_items]
-}
 
 /* 
   Terraform Resource that creates Custom Rules from TOMLs

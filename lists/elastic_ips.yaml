@@ -1,0 +1,7 @@
+# https://www.elastic.co/guide/en/security/current/lists-api-create-container.html
+name: "Elastic Assets"
+description: |
+  It is often perceived that Elastic tools connect to external infrastructure
+  (e.g. GCP buckets storing Elastic artifacts) maintained by Elastic
+  which may falsely trigger our SIEM detections.
+type: ip
